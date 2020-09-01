@@ -1,128 +1,120 @@
 #include<iostream>
 using namespace std;
 
-const  int MAX = 100;
+const  int MAX=100;
 
-struct coins {
+struct goods{
 	int value;//价值
 	int weight;//重量
-}coin[MAX];
+	int c;//体积
+}goods[MAX];
 
 
-int n = 4;
-int y = 12;
-int m[MAX][MAX];//备忘录，记录最轻总重量
-int s[MAX][MAX];//标记函数，记录最大硬币面值
+int n,W,V;
+int m[MAX][MAX][MAX];//优化函数
+int s[MAX][MAX][MAX];//标记函数
 
-
-void Data() {
-	cout << "物品总数：4" << endl;
-	cout << "各物品的价值：1 4 6 8" << endl;
-	coin[1].value = 1;
-	coin[2].value = 4;
-	coin[3].value = 6;
-	coin[4].value = 8;
-	cout << "各物品的重量：1 2 4 6" << endl;
-	coin[1].weight = 1;
-	coin[2].weight = 2;
-	coin[3].weight = 4;
-	coin[4].weight = 6;
-	cout << "总价值y：12" << endl;
-	cout << "***************************************************" << endl;
+//设置物品个数n
+//设置物品的价值v、重量w、体积c
+//总重量限制W、总体积限制V
+void DataIn() {
+	cout << "请输入物品总数：";
+	cin >> n;
+	cout << endl;
+	cout << "请输入各物品的价值：";
+	for (int i = 1; i <= n; i++)
+		cin >> goods[i].value;
+	cout << endl;
+	cout << "请输入各物品的重量：";
+	for (int i = 1; i <=n; i++)
+		cin >> goods[i].weight;
+	cout << endl;
+	cout << "请输入各物品的体积：";
+	for (int i = 1; i <= n; i++)
+		cin >> goods[i].c;
+	cout << endl;
+	cout << "请输入总重量限制W：";
+	cin >> W;
+	cout << "请输入总体积限制V：";
+	cin >> V;
 }
 
-void Coin()
+
+//优化+标记
+void Knapsack() 
 {
-	int i, j;
-	for (i = 1; i <= y; i++)  	//i=1时
-	{
-		m[1][i] = i * coin[1].weight;
-		s[1][i] = 1;
-	}
-	for (i = 2; i <= n; i++)
-	{
-		for (j = 1; j <= y; j++)
+		int i,j,k;
+		for (i = 1; i <= n; i++)
 		{
-			if (coin[i].value <= j)
+			for (j = 1; j <= W; j++)
 			{
-				if (m[i - 1][j] > (m[i - 1][j - coin[i].value] + coin[i].weight))
+				for (k = 1; k <= V; k++)
 				{
-					m[i][j] = m[i - 1][j - coin[i].value] + coin[i].weight;
-					s[i][j] = i;
-				}
-				else
-				{
-					m[i][j] = m[i - 1][j];
-					s[i][j] = s[i-1][j];
+					if ((goods[i].weight <= j) && (goods[i].c <= k))
+					{
+						if (m[i - 1][j][k] > (m[i - 1][j - goods[i].weight][k - goods[i].c] + goods[i].value))
+						{
+							m[i][j][k] = m[i - 1][j][k];
+							s[i][j][k] = 0;
+						}
+						else
+						{
+							m[i][j][k]=m[i - 1][j - goods[i].weight][k - goods[i].c] + goods[i].value;
+							s[i][j][k] = 1;
+						}
+					}
+					else
+					{
+						m[i][j][k] = m[i - 1][j][k];
+						s[i][j][k] = 0;
+					}
 				}
 			}
-			else
-			{
-				m[i][j] = m[i - 1][j];
-				s[i][j] = s[i - 1][j];
-			}				
 		}
-	}
 }
 
 
 void Out()
 {
-	int x[MAX];//记录各硬币使用次数
-	int val = y;
-	int j = n;
-	cout << "最轻总重量：" << m[j][val] << endl;
-	for (int i = 1; i <= n; i++) 
+	int i = n;
+	int j = W;
+	int k = V;
+	cout << "选择的物品分别是第"<<endl;
+	while(i&&j&&k)
 	{
-		x[i] = 0;
-	}
-
-	while (val!= 0)
-	{
-		j = s[j][val];
-		x[j] = 1;
-		val = val - coin[j].value;
-		while (s[j][val] == j)
+		if (s[i][j][k] == 1) 
 		{
-			val = val - coin[j].value;
-			x[j] += 1;
+			cout << i<<"  " ;
+			j -= goods[i].weight;
+			k -= goods[i].c;
 		}
+		i--;
 	}
-	cout << "付钱方法为：";
-	for (int i = 1; i <= n; i++)
-	{
-		cout << x[i] <<"个第"<< i << "个硬币  ";
-	}
-	
+	cout << "个" << endl;;
 }
 
 
 
-int main()
+int main() 
 {
-	int i, j;
-	Data();
-	Coin();
-	Out();
+    int i, j, k;
+	DataIn();
+	Knapsack();
+	cout << "最优选择时价值最大为：" << m[n][W][V]<< endl;
+	Out(); 
 	cout << endl;
-	cout << "备忘录（记录最轻总重量）：" << endl;
+	/*
 	for (i = 1; i <= n; i++)
 	{
-		for (j = 1; j <= y; j++)
+		for (j = 1; j <= W; j++)
 		{
-				cout << m[i][j]<<"   ";
+			for (k = 1; k <= V; k++)
+			{
+				cout << s[i][j][k]<<"   ";
+			}
+			cout << endl;
 		}
 		cout << endl;
 	}
-
-	cout << "标记函数（标记选中的最大的硬币序号）：" << endl;
-	for (i = 1; i <= n; i++)
-	{
-		for (j = 1; j <= y; j++)
-		{
-			cout << s[i][j] << "   ";
-		}
-		cout << endl;
-	}
-
+	*/
 }
